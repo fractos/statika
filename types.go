@@ -6,8 +6,9 @@ type Statika struct {
 	services []*ServiceDescription
 	instanceID string
 	containerInstanceID string
-	configurationFilename string
+	configurationURL string
 	session *session.Session
+	region string
 }
 
 type ServiceDescription struct {

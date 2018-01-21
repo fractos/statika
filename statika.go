@@ -14,11 +14,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"os"
 )
 
 func main() {
 	var statika Statika
-	statika.configurationFilename = "config.json"
+	statika.configurationURL = os.Getenv("CONFIGURATION_URL")
+	statika.region = os.Getenv("AWS_REGION")
 	statika.Start()
 }
 
@@ -29,17 +31,24 @@ func wrappedLog(s string) {
 func (statika *Statika) Start() {
 	wrappedLog("starting...")
 
-	configuration, err := readConfiguration(statika.configurationFilename)
+	statika.session = session.New(aws.NewConfig().WithRegion(statika.region))
+
+	configuration, err := readConfiguration(statika)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	statika.session = session.New(aws.NewConfig().WithRegion(configuration.Region))
-	statika.instanceID, err = getInstanceID()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	statika.instanceID, err = getInstanceID()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	statika.containerInstanceID, err = getContainerInstanceID(statika, configuration)
 	if err != nil {
 		log.Fatal(err)
@@ -201,11 +210,15 @@ func readFileFromS3(sess *session.Session, s3Url string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func readConfiguration(filename string) (*Configuration, error) {
-	reader := NewConfigurationReader(filename)
-	config, err := reader.Read()
+func readConfiguration(statika *Statika) (*Configuration, error) {
+	data, err := readFileFromS3(statika.session, statika.configurationURL)
 	if err != nil {
-		wrappedLog("problem while reading configuration")
+		wrappedLog("problem during read from S3")
+		return nil, err
+	}
+	var config *Configuration
+	if err = json.Unmarshal(data, &config); err != nil {
+		wrappedLog("problem during parse of configuration")
 		return nil, err
 	}
 
@@ -215,12 +228,12 @@ func readConfiguration(filename string) (*Configuration, error) {
 func getInstanceID() (string, error) {
 	metadata := ec2metadata.New(session.New())
 
-	doc, err := metadata.GetMetadata("instance-id")
+	id, err := metadata.GetMetadata("instance-id")
 	if err != nil {
 		wrappedLog("problem while getting EC2 metadata")
 		return "", err
 	}
-	return doc, nil
+	return id, nil
 }
 
 func getContainerInstanceID(statika *Statika, configuration *Configuration) (string, error) {
