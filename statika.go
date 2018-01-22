@@ -194,6 +194,8 @@ func readFileFromS3(sess *session.Session, s3Url string) ([]byte, error) {
 
 	u,_ := url.Parse(s3Url)
 
+	wrappedLog(fmt.Sprintf("reading file from bucket %s key %s", u.Host, u.Path))
+
 	result, err := service.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(u.Path),
