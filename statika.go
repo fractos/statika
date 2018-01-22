@@ -16,6 +16,7 @@ import (
 	"time"
 	"os"
 	"regexp"
+	"strings"
 )
 
 func main() {
@@ -440,7 +441,16 @@ func createLoadBalancerListener(statika *Statika, loadBalancerName string, loadB
 func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *elb.LoadBalancerDescription, hostPort int64) error {
 	client := elb.New(statika.session)
 
-	var regexHealthCheck = regexp.MustCompile(`^(?P<protocol>[^:]+):(?P<port>\d+)(?P<path>/.*?)$`)
+	var regexHealthCheck *regexp.Regexp
+
+	var httpMode = false
+
+	if strings.HasPrefix(*loadBalancerDescription.HealthCheck.Target, "HTTP") {
+		regexHealthCheck = regexp.MustCompile(`^(?P<protocol>[^:]+):(?P<port>\d+)(?P<path>/.*?)$`)
+		httpMode = true
+	} else {
+		regexHealthCheck = regexp.MustCompile(`^(?P<protocol>[^:]+):(?P<port>\d+)$`)
+	}
 
 	n1 := regexHealthCheck.SubexpNames()
 	result := regexHealthCheck.FindAllStringSubmatch(*loadBalancerDescription.HealthCheck.Target, -1)[0]
@@ -450,13 +460,17 @@ func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *el
 		md[n1[i]] = n
 	}
 
-	var targetProtocol = md["protocol"]
-	var targetPort = md["port"]
-	var targetPath = md["path"]
+	var candidateTarget string
 
-	wrappedLog(fmt.Sprintf("current health check target is: %s:%s%s", targetProtocol, targetPort, targetPath))
+	if httpMode {
+		wrappedLog(fmt.Sprintf("current health check target is: %s:%s%s", md["protocol"], md["port"], md["path"]))
+		candidateTarget = fmt.Sprintf("%s:%d%s", md["protocol"], md["path"])
+	} else {
+		wrappedLog(fmt.Sprintf("current health check target is: %s:%s", md["protocol"], md["port"]))
+		candidateTarget = fmt.Sprintf("%s:%s", md["protocol"], md["port"])
+	}
 
-	wrappedLog(fmt.Sprintf("setting health check target to: %s:%d%s", targetProtocol, hostPort, targetPath))
+	wrappedLog(fmt.Sprintf("setting health check target to: %s", candidateTarget))
 
 	configureHealthCheckInput := elb.ConfigureHealthCheckInput{
 		LoadBalancerName: aws.String(*loadBalancerDescription.LoadBalancerName),
@@ -465,7 +479,7 @@ func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *el
 			UnhealthyThreshold: loadBalancerDescription.HealthCheck.UnhealthyThreshold,
 			Interval: loadBalancerDescription.HealthCheck.Interval,
 			Timeout: loadBalancerDescription.HealthCheck.Timeout,
-			Target: aws.String(fmt.Sprintf("%s:%d%s", targetProtocol, hostPort, targetPath)),
+			Target: aws.String(candidateTarget),
 		}}
 
 	_, err := client.ConfigureHealthCheck(&configureHealthCheckInput)
