@@ -206,6 +206,7 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 							err = updateLoadBalancerHealthCheck(statika, loadBalancerDescription, hostPort)
 							if err != nil {
 								wrappedLog("problem while updating load balancer health check")
+								return -1, err
 							}
 						}
 					}
