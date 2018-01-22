@@ -464,10 +464,10 @@ func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *el
 
 	if httpMode {
 		wrappedLog(fmt.Sprintf("current health check target is: %s:%s%s", md["protocol"], md["port"], md["path"]))
-		candidateTarget = fmt.Sprintf("%s:%d%s", md["protocol"], md["path"])
+		candidateTarget = fmt.Sprintf("%s:%d%s", md["protocol"], hostPort, md["path"])
 	} else {
 		wrappedLog(fmt.Sprintf("current health check target is: %s:%s", md["protocol"], md["port"]))
-		candidateTarget = fmt.Sprintf("%s:%s", md["protocol"], md["port"])
+		candidateTarget = fmt.Sprintf("%s:%d", md["protocol"], hostPort)
 	}
 
 	wrappedLog(fmt.Sprintf("setting health check target to: %s", candidateTarget))
