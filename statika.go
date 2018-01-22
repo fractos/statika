@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"time"
 	"os"
+	"regexp"
 )
 
 func main() {
@@ -200,6 +201,11 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 							if err != nil {
 								wrappedLog("problem while creating load balancer listener")
 								return -1, err
+							}
+
+							err = updateLoadBalancerHealthCheck(statika, loadBalancerDescription, hostPort)
+							if err != nil {
+								wrappedLog("problem while updating load balancer health check")
 							}
 						}
 					}
@@ -427,6 +433,28 @@ func createLoadBalancerListener(statika *Statika, loadBalancerName string, loadB
 	}
 
 	_, err := client.CreateLoadBalancerListeners(&createLoadBalancerListenerInput)
+	return err
+}
+
+func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *elb.LoadBalancerDescription, hostPort int64) error {
+	client := elb.New(statika.session)
+
+	var regexHealthCheck = regexp.MustCompile(`^([^:]+):(\d+)(/.*?)$`)
+
+	var targetProtocol = regexHealthCheck.SubexpNames()[0]
+	var targetPath = regexHealthCheck.SubexpNames()[2]
+
+	configureHealthCheckInput := elb.ConfigureHealthCheckInput{
+		LoadBalancerName: aws.String(*loadBalancerDescription.LoadBalancerName),
+		HealthCheck: &elb.HealthCheck {
+			HealthyThreshold: loadBalancerDescription.HealthCheck.HealthyThreshold,
+			UnhealthyThreshold: loadBalancerDescription.HealthCheck.UnhealthyThreshold,
+			Interval: loadBalancerDescription.HealthCheck.Interval,
+			Timeout: loadBalancerDescription.HealthCheck.Timeout,
+			Target: aws.String(fmt.Sprintf("%s:%s%s", targetProtocol, hostPort, targetPath)),
+		}}
+
+	_, err := client.ConfigureHealthCheck(&configureHealthCheckInput)
 	return err
 }
 
