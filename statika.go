@@ -73,6 +73,10 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 	wrappedLog("entered lifecycle")
 
 	for true {
+		wrappedLog(fmt.Sprintf("sleeping for %d seconds...", configuration.SleepTimeSeconds))
+
+		time.Sleep(time.Duration(configuration.SleepTimeSeconds) * time.Second)
+		
 		services, err := parseServices(statika)
 		if err != nil {
 			wrappedLog("problem while parsing services")
@@ -103,10 +107,6 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 
 		// for each service
 		for _, service := range services {
-			wrappedLog(fmt.Sprintf("sleeping for %d seconds...", configuration.SleepTimeSeconds))
-
-			time.Sleep(time.Duration(configuration.SleepTimeSeconds) * time.Second)
-
 			wrappedLog(fmt.Sprintf("considering service %s", service.ServiceName))
 
 			// get load balancer description
@@ -447,7 +447,7 @@ func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *el
 	var targetPath = regexHealthCheck.SubexpNames()[2]
 
 	wrappedLog(fmt.Sprintf("current health check: %s:%s%s", targetProtocol, targetPort, targetPath))
-	
+
 	configureHealthCheckInput := elb.ConfigureHealthCheckInput{
 		LoadBalancerName: aws.String(*loadBalancerDescription.LoadBalancerName),
 		HealthCheck: &elb.HealthCheck {
