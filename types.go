@@ -10,6 +10,7 @@ type Statika struct {
 	instanceID string
 	containerInstanceID string
 	configurationURL string
+	serviceDescriptionURL string
 	session *session.Session
 	region string
 }
@@ -24,6 +25,5 @@ type ServiceDescription struct {
 type Configuration struct {
 	Region string `json:"region"`
 	Cluster string `json:"cluster"`
-	ServiceDescriptionURL url.URL `json:"serviceDescriptionURL"`
 	SleepTimeSeconds int64 `json:"sleepTimeSeconds"`
 }

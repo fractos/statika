@@ -20,6 +20,7 @@ import (
 func main() {
 	var statika Statika
 	statika.configurationURL = os.Getenv("CONFIGURATION_URL")
+	statika.serviceDescriptionURL = os.Getenv("SERVICES_URL")
 	statika.region = os.Getenv("AWS_REGION")
 	statika.Start()
 }
@@ -71,7 +72,7 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 	wrappedLog("entered lifecycle")
 
 	for true {
-		services, err := parseServices(statika, configuration)
+		services, err := parseServices(statika)
 		if err != nil {
 			wrappedLog("problem while parsing services")
 			return -1, err
@@ -174,8 +175,8 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 	return 0, nil
 }
 
-func parseServices(statika *Statika, configuration *Configuration) ([]*ServiceDescription, error) {
-	data, err := readFileFromS3(statika.session, configuration.ServiceDescriptionURL.String())
+func parseServices(statika *Statika) ([]*ServiceDescription, error) {
+	data, err := readFileFromS3(statika.session, statika.serviceDescriptionURL)
 	if err != nil {
 		wrappedLog("problem while reading file from S3")
 		return nil, err
@@ -228,7 +229,6 @@ func readConfiguration(statika *Statika) (*Configuration, error) {
 		return nil, err
 	}
 
-	wrappedLog(fmt.Sprintf("read config:\nRegion: %s\nCluster: %s\nServiceDescriptionURL: %s\nSleepTimeSeconds %d", config.Region, config.Cluster, config.ServiceDescriptionURL, config.SleepTimeSeconds))
 	return config, nil
 }
 
