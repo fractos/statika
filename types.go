@@ -1,6 +1,9 @@
 package main
 
-import "github.com/aws/aws-sdk-go/aws/session"
+import (
+	"github.com/aws/aws-sdk-go/aws/session"
+	"net/url"
+)
 
 type Statika struct {
 	services []*ServiceDescription
@@ -21,6 +24,6 @@ type ServiceDescription struct {
 type Configuration struct {
 	Region string `json:"region"`
 	Cluster string `json:"cluster"`
-	ServiceDescriptionURL string `json:"serviceDescriptionURL"`
+	ServiceDescriptionURL url.URL `json:"serviceDescriptionURL"`
 	SleepTimeSeconds int64 `json:"sleepTimeSeconds"`
 }

@@ -175,7 +175,7 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 }
 
 func parseServices(statika *Statika, configuration *Configuration) ([]*ServiceDescription, error) {
-	data, err := readFileFromS3(statika.session, configuration.ServiceDescriptionURL)
+	data, err := readFileFromS3(statika.session, configuration.ServiceDescriptionURL.String())
 	if err != nil {
 		wrappedLog("problem while reading file from S3")
 		return nil, err
