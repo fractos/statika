@@ -76,7 +76,7 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 		wrappedLog(fmt.Sprintf("sleeping for %d seconds...", configuration.SleepTimeSeconds))
 
 		time.Sleep(time.Duration(configuration.SleepTimeSeconds) * time.Second)
-		
+
 		services, err := parseServices(statika)
 		if err != nil {
 			wrappedLog("problem while parsing services")
@@ -440,11 +440,19 @@ func createLoadBalancerListener(statika *Statika, loadBalancerName string, loadB
 func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *elb.LoadBalancerDescription, hostPort int64) error {
 	client := elb.New(statika.session)
 
-	var regexHealthCheck = regexp.MustCompile(`^([^:]+):(\d+)(/.*?)$`)
+	var regexHealthCheck = regexp.MustCompile(`^(?P<protocol>[^:]+):(?P<port>\d+)(?P<path>/.*?)$`)
 
-	var targetProtocol = regexHealthCheck.SubexpNames()[0]
-	var targetPort = regexHealthCheck.SubexpNames()[1]
-	var targetPath = regexHealthCheck.SubexpNames()[2]
+	n1 := regexHealthCheck.SubexpNames()
+	result := regexHealthCheck.FindAllStringSubmatch(*loadBalancerDescription.HealthCheck.Target, -1)[0]
+
+	md := map[string]string{}
+	for i, n := range result {
+		md[n1[i]] = n
+	}
+	
+	var targetProtocol = md["protocol"]
+	var targetPort = md["port"]
+	var targetPath = md["path"]
 
 	wrappedLog(fmt.Sprintf("current health check: %s:%s%s", targetProtocol, targetPort, targetPath))
 
