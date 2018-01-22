@@ -18,7 +18,21 @@ There is a Docker wrapper for this at [Statika-Docker](https://github.com/fracto
 
 ## Running
 
-The process needs
+The process needs the following permissions:
+
+| Action | Resource |
+| - | - |
+| elb.ConfigureHealthCheck | (load balancer ARN) |
+| elb.CreateLoadBalancerListener | (load balancer ARN) |
+| elb.DeleteLoadBalancerListeners | (load balancer ARN) |
+| elb.DeregisterInstancesFromLoadBalancer | (load balancer ARN) |
+| elb.RegisterInstancesWithLoadBalancer | (load balancer ARN) |
+| elb.DescribeLoadBalancers | (load balancer ARN) |
+| ecs.ListTasks | (cluster ARN) |
+| ecs.DescribeTasks | (cluster ARN) |
+| ecs.DescribeContainerInstances | (cluster ARN) |
+| ecs.ListContainerInstances | (cluster ARN) |
+| s3.GetObject | (bucket ARN) |
 
 Some environment variables to set:
 
