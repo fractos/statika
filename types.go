@@ -22,7 +22,6 @@ type ServiceDescription struct {
 
 // Configuration holds the basic environment information for Statika including the name of the service description file
 type Configuration struct {
-	Region string `json:"region"`
 	Cluster string `json:"cluster"`
 	SleepTimeSeconds int64 `json:"sleepTimeSeconds"`
 }
