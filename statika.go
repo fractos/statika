@@ -165,9 +165,14 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 			for _, container := range taskDescription.Containers {
 				if *container.Name == service.ExposedContainerName {
 					var hostPort int64
-					hostPort = *container.NetworkBindings[0].HostPort
+					if len(container.NetworkBindings) > 0 {
+						hostPort = *container.NetworkBindings[0].HostPort
 
-					wrappedLog(fmt.Sprintf("found host port value of %d", hostPort))
+						wrappedLog(fmt.Sprintf("found host port value of %d", hostPort))
+					} else {
+						wrappedLog("couldn't find any network binding on the task description")
+						continue
+					}
 
 					if !instanceRegistered {
 						// register the instance
