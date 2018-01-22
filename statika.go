@@ -85,17 +85,43 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 			wrappedLog("problem while getting container instance tasks")
 			return -1, err
 		}
-		// get descriptions
-		wrappedLog("fetching task descriptions")
-		instanceTaskDescriptions, err := getContainerInstanceTaskDescriptions(statika, configuration, instanceTasks)
-		if err != nil {
-			wrappedLog("problem while getting container instance task descriptions")
-			return -1, err
+
+		var instanceTaskDescriptions []*ecs.Task
+
+		if len(instanceTasks) == 0 {
+			wrappedLog("no instance tasks to synchronise")
+		} else {
+			// get descriptions
+			wrappedLog("fetching task descriptions")
+			instanceTaskDescriptions, err = getContainerInstanceTaskDescriptions(statika, configuration, instanceTasks)
+			if err != nil {
+				wrappedLog("problem while getting container instance task descriptions")
+				return -1, err
+			}
 		}
 
 		// for each service
 		for _, service := range services {
+			wrappedLog(fmt.Sprintf("sleeping for %d seconds...", configuration.SleepTimeSeconds))
+
+			time.Sleep(time.Duration(configuration.SleepTimeSeconds) * time.Second)
+
 			wrappedLog(fmt.Sprintf("considering service %s", service.ServiceName))
+
+			// get load balancer description
+			loadBalancerDescription, err := getLoadBalancerDescription(statika, service.LoadBalancerName)
+			if err != nil {
+				wrappedLog("problem while getting load balancer description")
+				return -1, err
+			}
+
+			var instanceRegistered = false
+			for _, candidateInstance := range loadBalancerDescription.Instances {
+				if *candidateInstance.InstanceId == statika.instanceID {
+					instanceRegistered = true
+					break
+				}
+			}
 
 			// get the list of tasks running for this service on this container instance
 
@@ -105,16 +131,35 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 				return -1, err
 			}
 
-			// should be exactly one service task
-			if len(serviceTasks) != 1 {
-				wrappedLog(fmt.Sprintf("there are not exactly 1 instances of this service running (actual: %d)", len(serviceTasks)))
+			if len(serviceTasks) == 0 {
+				// no tasks for this service running on the container instance
+				// deregister us from the load balancer if we are registered
+				if instanceRegistered {
+					wrappedLog("deregistering instance from service's load balancer")
+
+					err := deregisterInstanceFromLoadBalancer(statika, service.LoadBalancerName)
+					if err != nil {
+						wrappedLog("problem while deregistering from load balancer")
+						return -1, err
+					}
+				}
+
+				continue
+
+			} else if len(serviceTasks) > 1 {
+				wrappedLog(fmt.Sprintf("there is not exactly 1 instance of this service running (actual: %d)", len(serviceTasks)))
 				wrappedLog("skipping this service")
 				continue
 			}
 
-			wrappedLog(fmt.Sprintf("found running task instance (id: %s)", serviceTasks[0] ))
+			wrappedLog(fmt.Sprintf("found running task instance (id: %s)", *serviceTasks[0] ))
 
 			taskDescription := getInstanceTaskDescription(*serviceTasks[0], instanceTaskDescriptions)
+
+			if taskDescription == nil {
+				wrappedLog("couldn't find task description")
+				continue
+			}
 
 			// find container within task description
 			for _, container := range taskDescription.Containers {
@@ -123,21 +168,6 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 					hostPort = *container.NetworkBindings[0].HostPort
 
 					wrappedLog(fmt.Sprintf("found host port value of %d", hostPort))
-
-					// get load balancer description
-					loadBalancerDescription, err := getLoadBalancerDescription(statika, service.LoadBalancerName)
-					if err != nil {
-						wrappedLog("problem while getting load balancer description")
-						return -1, err
-					}
-
-					var instanceRegistered = false
-					for _, candidateInstance := range loadBalancerDescription.Instances {
-						if *candidateInstance.InstanceId == statika.instanceID {
-							instanceRegistered = true
-							break
-						}
-					}
 
 					if !instanceRegistered {
 						// register the instance
@@ -166,10 +196,6 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 				}
 			}
 		}
-
-		wrappedLog(fmt.Sprintf("sleeping for %d seconds...", configuration.SleepTimeSeconds))
-
-		time.Sleep(time.Duration(configuration.SleepTimeSeconds) * time.Second)
 	}
 
 	return 0, nil
@@ -351,6 +377,16 @@ func registerInstanceWithLoadBalancer(statika *Statika, loadBalancerName string)
 		Instances: []*elb.Instance { { InstanceId: aws.String(statika.instanceID) } },
 	}
 	_, err := client.RegisterInstancesWithLoadBalancer(&registerInstancesWithLoadBalancerInput)
+	return err
+}
+
+func deregisterInstanceFromLoadBalancer(statika *Statika, loadBalancerName string) error {
+	client := elb.New(statika.session)
+	deregisterInstancesFromLoadBalancerInput := elb.DeregisterInstancesFromLoadBalancerInput{
+		LoadBalancerName: aws.String(loadBalancerName),
+		Instances: []*elb.Instance { { InstanceId: aws.String(statika.instanceID) } },
+	}
+	_, err := client.DeregisterInstancesFromLoadBalancer(&deregisterInstancesFromLoadBalancerInput)
 	return err
 }
 
