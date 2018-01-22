@@ -443,8 +443,11 @@ func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *el
 	var regexHealthCheck = regexp.MustCompile(`^([^:]+):(\d+)(/.*?)$`)
 
 	var targetProtocol = regexHealthCheck.SubexpNames()[0]
+	var targetPort = regexHealthCheck.SubexpNames()[1]
 	var targetPath = regexHealthCheck.SubexpNames()[2]
 
+	wrappedLog(fmt.Sprintf("current health check: %s:%s%s", targetProtocol, targetPort, targetPath))
+	
 	configureHealthCheckInput := elb.ConfigureHealthCheckInput{
 		LoadBalancerName: aws.String(*loadBalancerDescription.LoadBalancerName),
 		HealthCheck: &elb.HealthCheck {
