@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
-	"net/url"
 )
 
 type Statika struct {
