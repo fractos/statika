@@ -48,6 +48,7 @@ func (statika *Statika) Start() {
 		log.Fatal(err)
 		return
 	}
+	wrappedLog(fmt.Sprintf("instanceID is %s", statika.instanceID))
 
 	statika.containerInstanceID, err = getContainerInstanceID(statika, configuration)
 	if err != nil {
@@ -240,8 +241,7 @@ func getContainerInstanceID(statika *Statika, configuration *Configuration) (str
 	// because AWS make life difficult - can't get to ecs-agent local port from another container,
 	// so get list of container instances and find our instance ID to get the container instance ARN.
 
-	sess := session.New(aws.NewConfig().WithRegion(configuration.Region))
-	client := ecs.New(sess)
+	client := ecs.New(statika.session)
 
 	listContainerInstancesInput := ecs.ListContainerInstancesInput{
 		Cluster: aws.String(configuration.Cluster),
@@ -249,6 +249,7 @@ func getContainerInstanceID(statika *Statika, configuration *Configuration) (str
 
 	containerInstances, err := client.ListContainerInstances(&listContainerInstancesInput)
 	if err != nil {
+		wrappedLog("problem while listing container instances")
 		return "", err
 	}
 
@@ -259,6 +260,7 @@ func getContainerInstanceID(statika *Statika, configuration *Configuration) (str
 
 	containerInstanceDescriptions, err := client.DescribeContainerInstances(&describeContainerInstanceInput)
 	if err != nil {
+		wrappedLog("problem while describing container instance")
 		return "", err
 	}
 
@@ -268,6 +270,7 @@ func getContainerInstanceID(statika *Statika, configuration *Configuration) (str
 		}
 	}
 
+	wrappedLog("couldn't find container instance")
 	return "", nil
 }
 
