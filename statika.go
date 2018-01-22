@@ -449,12 +449,14 @@ func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *el
 	for i, n := range result {
 		md[n1[i]] = n
 	}
-	
+
 	var targetProtocol = md["protocol"]
 	var targetPort = md["port"]
 	var targetPath = md["path"]
 
-	wrappedLog(fmt.Sprintf("current health check: %s:%s%s", targetProtocol, targetPort, targetPath))
+	wrappedLog(fmt.Sprintf("current health check target is: %s:%s%s", targetProtocol, targetPort, targetPath))
+
+	wrappedLog(fmt.Sprintf("setting health check target to: %s:%d%s", targetProtocol, hostPort, targetPath))
 
 	configureHealthCheckInput := elb.ConfigureHealthCheckInput{
 		LoadBalancerName: aws.String(*loadBalancerDescription.LoadBalancerName),
@@ -463,7 +465,7 @@ func updateLoadBalancerHealthCheck(statika *Statika, loadBalancerDescription *el
 			UnhealthyThreshold: loadBalancerDescription.HealthCheck.UnhealthyThreshold,
 			Interval: loadBalancerDescription.HealthCheck.Interval,
 			Timeout: loadBalancerDescription.HealthCheck.Timeout,
-			Target: aws.String(fmt.Sprintf("%s:%s%s", targetProtocol, hostPort, targetPath)),
+			Target: aws.String(fmt.Sprintf("%s:%d%s", targetProtocol, hostPort, targetPath)),
 		}}
 
 	_, err := client.ConfigureHealthCheck(&configureHealthCheckInput)
