@@ -175,13 +175,13 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 }
 
 func parseServices(statika *Statika, configuration *Configuration) ([]*ServiceDescription, error) {
-	buffer, err := readFileFromS3(statika.session, configuration.ServiceDescriptionURL)
+	data, err := readFileFromS3(statika.session, configuration.ServiceDescriptionURL)
 	if err != nil {
 		wrappedLog("problem while reading file from S3")
 		return nil, err
 	}
 	var serviceDescriptions []*ServiceDescription
-	err = json.Unmarshal(buffer, &serviceDescriptions)
+	err = json.Unmarshal(data, &serviceDescriptions)
 	if err != nil {
 		wrappedLog("problem while unmarshalling JSON")
 		return nil, err
@@ -219,7 +219,7 @@ func readConfiguration(statika *Statika) (*Configuration, error) {
 		wrappedLog("problem during read from S3")
 		return nil, err
 	}
-	
+
 	wrappedLog(fmt.Sprintf("config was %s", data))
 
 	var config *Configuration
@@ -228,6 +228,7 @@ func readConfiguration(statika *Statika) (*Configuration, error) {
 		return nil, err
 	}
 
+	wrappedLog(fmt.Sprintf("read config:\nRegion: %s\nCluster: %s\nServiceDescriptionURL: %s\nSleepTimeSeconds %d", config.Region, config.Cluster, config.ServiceDescriptionURL, config.SleepTimeSeconds))
 	return config, nil
 }
 
