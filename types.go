@@ -17,18 +17,10 @@ type ServiceDescription struct {
 	ExposedContainerName string `json:"exposedContainerName"`
 }
 
-type ServiceDescriptionReader interface {
-	Read() []*ServiceDescription
-}
-
 // Configuration holds the basic environment information for Statika including the name of the service description file
 type Configuration struct {
 	Region string `json:"region"`
 	Cluster string `json:"cluster"`
-	ServiceDescriptionURL string `json:"serviceDescriptionFilename"`
+	ServiceDescriptionURL string `json:"serviceDescriptionURL"`
 	SleepTimeSeconds int64 `json:"sleepTimeSeconds"`
-}
-
-type ConfigurationReader struct {
-	configFilename string
 }
