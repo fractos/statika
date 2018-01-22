@@ -219,6 +219,9 @@ func readConfiguration(statika *Statika) (*Configuration, error) {
 		wrappedLog("problem during read from S3")
 		return nil, err
 	}
+	
+	wrappedLog(fmt.Sprintf("config was %s", data))
+
 	var config *Configuration
 	if err = json.Unmarshal(data, &config); err != nil {
 		wrappedLog("problem during parse of configuration")
