@@ -176,6 +176,8 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 
 					if !instanceRegistered {
 						// register the instance
+						wrappedLog("registering instance with service load balancer")
+
 						err := registerInstanceWithLoadBalancer(statika, *loadBalancerDescription.LoadBalancerName)
 						if err != nil {
 							wrappedLog("problem while registering instance with load balancer")
@@ -185,11 +187,15 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 
 					for _, listener := range loadBalancerDescription.ListenerDescriptions {
 						if *listener.Listener.InstancePort != hostPort {
+							wrappedLog("deleting load balancer listener")
+
 							err := deleteLoadBalancerListener(statika, *loadBalancerDescription.LoadBalancerName, listener)
 							if err != nil {
 								wrappedLog("problem while deleting load balancer listener")
 								return -1, err
 							}
+							wrappedLog("creating load balancer listener")
+
 							err = createLoadBalancerListener(statika, *loadBalancerDescription.LoadBalancerName, listener, hostPort)
 							if err != nil {
 								wrappedLog("problem while creating load balancer listener")
