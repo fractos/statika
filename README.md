@@ -4,11 +4,15 @@
 
 Statika is a process that will update AWS Classic Load Balancer targets for a set of defined ECS tasks.
 
-The use-case is for ECS being used on a cluster with a single node and Classic Load Balancers being used.
+The use-case is for ECS being used on single-node clusters and Classic Load Balancers being used.
+
 In order to allow rolling deploys to take place then a load balancer must be able to target the dynamic port numbers
 that Docker assigns to containers with exposed ports. Since a Classic Load Balancer cannot track the dynamic port
 assignment then Statika fills that gap, inspecting running tasks on a container host and updating the service's
 load balancer listener target port and health check port when needed.
+
+Statika should be launched on each host in a cluster so it can manage the process of registering and deregistering the
+host with the service's load balancer, and setting the ports on the load balancer when the running tasks change.
 
 It should be pointed out that this can be achieved purely in AWS using a combination of Application Load Balancers (for
 HTTP/HTTPS) and the new Network Load Balancers (for TCP), which are both able to utilise Target Groups that can track
