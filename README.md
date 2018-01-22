@@ -18,7 +18,7 @@ There is a Docker wrapper for this at [Statika-Docker](https://github.com/fracto
 
 ## Running
 
-The process needs the following permissions:
+Statika needs the following permissions:
 
 | Action | Resource |
 | - | - |
@@ -38,7 +38,7 @@ Some environment variables to set:
 
 | Name | Description | Example |
 | - | - | - |
-| CONFIGURATTION_URL | S3 URL of the JSON configuration file | s3://mybucket/statika-config.json |
+| CONFIGURATION_URL | S3 URL of the JSON configuration file | s3://mybucket/statika-config.json |
 | SERVICES_URL | S3 URL of the JSON services file | s3://mybucket/statika-services.json |
 | AWS_REGION | AWS Region name | eu-west-1 |
 
