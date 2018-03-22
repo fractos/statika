@@ -360,6 +360,9 @@ func getContainerInstanceTaskDescriptions(statika *Statika, configuration *Confi
 func getServiceTasks(statika *Statika, configuration *Configuration, service string) ([]*string, error) {
 	client := ecs.New(statika.session)
 
+	wrappedLog(fmt.Sprintf("listing tasks in cluster %s on container instance %s of family %s",
+		configuration.Cluster, statika.containerInstanceID, service))
+
 	listTasksInput := ecs.ListTasksInput{
 		Cluster: aws.String(configuration.Cluster),
 		ContainerInstance: aws.String(statika.containerInstanceID),
@@ -371,6 +374,8 @@ func getServiceTasks(statika *Statika, configuration *Configuration, service str
 		return nil, err
 	}
 
+	wrappedLog(fmt.Sprintf("%d result(s)", len(results.TaskArns)))
+	
 	return results.TaskArns, nil
 }
 
