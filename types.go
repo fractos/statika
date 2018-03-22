@@ -16,6 +16,7 @@ type Statika struct {
 
 type ServiceDescription struct {
 	ServiceName string `json:"serviceName"`
+	Family string `json:"family"`
 	LoadBalancerName string `json:"loadBalancerName"`
 	ExposedContainerName string `json:"exposedContainerName"`
 }

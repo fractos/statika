@@ -127,7 +127,7 @@ func lifecycle(statika *Statika, configuration *Configuration) (int, error) {
 
 			// get the list of tasks running for this service on this container instance
 
-			serviceTasks, err := getServiceTasks(statika, configuration, service.ServiceName)
+			serviceTasks, err := getServiceTasks(statika, configuration, service.Family)
 			if err != nil {
 				wrappedLog("problem while getting service tasks")
 				return -1, err
@@ -357,16 +357,16 @@ func getContainerInstanceTaskDescriptions(statika *Statika, configuration *Confi
 	return results.Tasks, nil
 }
 
-func getServiceTasks(statika *Statika, configuration *Configuration, service string) ([]*string, error) {
+func getServiceTasks(statika *Statika, configuration *Configuration, family string) ([]*string, error) {
 	client := ecs.New(statika.session)
 
 	wrappedLog(fmt.Sprintf("listing tasks in cluster %s on container instance %s of family %s",
-		configuration.Cluster, statika.containerInstanceID, service))
+		configuration.Cluster, statika.containerInstanceID, family))
 
 	listTasksInput := ecs.ListTasksInput{
 		Cluster: aws.String(configuration.Cluster),
 		ContainerInstance: aws.String(statika.containerInstanceID),
-		Family: aws.String(service),
+		Family: aws.String(family),
 	}
 
 	results, err := client.ListTasks(&listTasksInput)
@@ -375,7 +375,7 @@ func getServiceTasks(statika *Statika, configuration *Configuration, service str
 	}
 
 	wrappedLog(fmt.Sprintf("%d result(s)", len(results.TaskArns)))
-	
+
 	return results.TaskArns, nil
 }
 
