@@ -64,6 +64,7 @@ Some environment variables to set:
 [
   {
     "serviceName": "<ecs-service-name>",
+    "family": "<ecs-task-family-name>",
     "exposedContainerName": "<container-name-to-balance>",
     "loadBalancerName": "<name-of-classic-load-balancer>"
   }
