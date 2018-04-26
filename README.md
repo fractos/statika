@@ -18,7 +18,7 @@ It should be pointed out that this can be achieved purely in AWS using a combina
 HTTP/HTTPS) and the new Network Load Balancers (for TCP), which are both able to utilise Target Groups that can track
 dynamic port numbers and thus allow rolling deploys on single instances.
 
-UPDATE: Except that NLBs aren't fit for this purpose - they can't be used to target a service on the same host as the source of the request - i.e. they can't do loopback. This is really quite bad for service discovery.
+UPDATE: Except that NLBs aren't fit for this purpose - they can't be used to target a service on the same host as the source of the request - i.e. they can't do loopback. This is really quite bad for service discovery, however it shows that something like Statika can really help in these situations.
 
 There is a Docker wrapper for this at [Statika-Docker](https://github.com/fractos/statika-docker)
 
